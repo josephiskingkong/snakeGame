@@ -141,6 +141,14 @@ void setCursorPosition(int x, int y) {
     SetConsoleCursorPosition(hOut, coord);
 }
 
+void hideCursor () {
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO info;
+	info.dwSize = 100;
+	info.bVisible - FALSE;
+	SetConsoleCursorInfo(consoleHandle, &info);
+}
+
 void setup() {
     gameOver = false;
     dir = STOP;
@@ -153,7 +161,7 @@ void setup() {
 
 void draw(string username, int bestScore) {
 	
-	//system("cls");
+	hideCursor();
 	
 	for (int columnIndex = 0; columnIndex < width; ++columnIndex) {
 		setCursorPosition(columnIndex, 0);
