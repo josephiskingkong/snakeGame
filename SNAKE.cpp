@@ -124,7 +124,7 @@ int x, y, foodX, foodY, score;
 int tailX[100], tailY[100];
 int tailSize = 0;
 int timeSleep = 150;
-int sleepDeduction = 10;
+int sleepDeduction = 5;
 int bestScore = 0;	
 int rowCount = 0;
 
@@ -134,42 +134,65 @@ string username;
 enum direction { STOP = 0, LEFT, RIGHT, DOWN, UP };
 direction dir;
 
+void setCursorPosition(int x, int y) {
+    static const HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    cout.flush();
+    COORD coord = { (SHORT)x, (SHORT)y };
+    SetConsoleCursorPosition(hOut, coord);
+}
+
 void setup() {
     gameOver = false;
     dir = STOP;
-    x = rand() % width;
-    y = rand() % height;
+    x = rand() % (width - 1) + 1;
+    y = rand() % (height - 1) + 1;
     score = 0;
-    foodX = rand() % width;
-    foodY = rand() % height;
+    foodX = rand() % (width - 1) + 1;
+    foodY = rand() % (height - 1) + 1;
 }
 
 void draw(string username, int bestScore) {
 	
-	system("cls");
+	//system("cls");
 	
-	for (int columnIndex = 0; columnIndex < width + 2; ++columnIndex) {
+	for (int columnIndex = 0; columnIndex < width; ++columnIndex) {
+		setCursorPosition(columnIndex, 0);
 		cout << "#";
+		cout << "";
+		cout.flush();		
 	}
 	cout << endl;
 	
-	for (int columnIndex = 0; columnIndex < height; ++columnIndex) {
+	for (int columnIndex = 1; columnIndex < height; ++columnIndex) {
 		for (int rowIndex = 0; rowIndex < width; ++rowIndex) {
 			if (rowIndex == 0) {
+				setCursorPosition(rowIndex, columnIndex);
 				cout << "#";
+				cout << "";
+				cout.flush();
 			}
 			
 			if (columnIndex == y && rowIndex == x) {
+				setCursorPosition(rowIndex, columnIndex);
 				cout << "@";
+				cout << "";
+				cout.flush();
+				
 			} else if (columnIndex == foodY && rowIndex == foodX) {
 				colorize(96);
+				setCursorPosition(rowIndex, columnIndex);
 				cout << "$";
+				cout << "";
+				cout.flush();
 				colorize(2);
 			} else {
 				bool print = false;
 				for (int tailIndex = 0; tailIndex < tailSize; ++tailIndex) {
 					if (tailX[tailIndex] == rowIndex && tailY[tailIndex] == columnIndex) {
+						setCursorPosition(rowIndex, columnIndex);
 						cout << "*";
+						cout << "";
+						cout.flush();						
 						print = true;
 					}
 				}
@@ -177,16 +200,22 @@ void draw(string username, int bestScore) {
 			    cout << " ";			
 		    }
 			if (rowIndex == width - 1) {
+				setCursorPosition(rowIndex, columnIndex);
 				cout << "#";
+				cout << "";
+				cout.flush();
 			}
 		}
 	    cout << endl;
 	}
 	
-	for (int columnIndex = 0; columnIndex < width + 2; ++columnIndex) {
+	for (int columnIndex = 0; columnIndex < width; ++columnIndex) {
+		setCursorPosition(columnIndex, height);
 		cout << "#";
+		cout << "";
+		cout.flush();
 	}
-	cout << endl << endl;
+	cout << "\n\n";
 	cout << "+";
 	for (int columnIndex = 0; columnIndex < 24; ++columnIndex) {
 		cout << "-";
@@ -231,7 +260,6 @@ void draw(string username, int bestScore) {
 		cout << "-";
 	}
 	cout << "+";
-	
 }
 
 void input() {
@@ -283,7 +311,7 @@ void logic() {
 		    break;	
 	}
 	
-	if (x > width || x < 0 || y >= height || y < 0 ) {
+	if (x >= width || x <= 0 || y >= height || y <= 0 ) {
 		gameOver = true;
 	}
 	for (int tailIndex = 0; tailIndex < tailSize; ++tailIndex) {
@@ -297,7 +325,7 @@ void logic() {
 		    bestScore = score;
 	    }
 		timeSleep = timeSleep - sleepDeduction;
-		if (timeSleep == 50) {
+		if (timeSleep <= 75) {
 			sleepDeduction = 0;
 		}
 		foodX = rand() % width;
@@ -382,6 +410,8 @@ int main() {
 		goto start;
 	}
 	colorize(2);
+	
+	system("cls");
 
 	setup();
 	while(!gameOver) {
