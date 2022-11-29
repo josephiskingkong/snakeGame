@@ -120,7 +120,7 @@ bool isUsernameInList;
 const int width = 20;
 const int height = 20;
 
-int x, y, foodX, foodY, score;
+int headX, headY, foodX, foodY, score;
 int tailX[100], tailY[100];
 int tailSize = 0;
 int timeSleep = 150;
@@ -134,10 +134,10 @@ string username;
 enum direction { STOP = 0, LEFT, RIGHT, DOWN, UP };
 direction dir;
 
-void setCursorPosition(int x, int y) {
+void setCursorPosition(int headX, int headY) {
     static const HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     cout.flush();
-    COORD coord = { (SHORT)x, (SHORT)y };
+    COORD coord = { (SHORT)headX, (SHORT)headY };
     SetConsoleCursorPosition(hOut, coord);
 }
 
@@ -152,8 +152,8 @@ void hideCursor () {
 void setup() {
     gameOver = false;
     dir = STOP;
-    x = rand() % (width - 1) + 1;
-    y = rand() % (height - 1) + 1;
+    headX = rand() % (width - 1) + 1;
+    headY = rand() % (height - 1) + 1;
     score = 0;
     foodX = rand() % (width - 1) + 1;
     foodY = rand() % (height - 1) + 1;
@@ -163,33 +163,39 @@ void draw(string username, int bestScore) {
 	
 	hideCursor();
 	
-	for (int columnIndex = 0; columnIndex < width; ++columnIndex) {
+	
+	
+	for (int columnIndex = 0; columnIndex < width - 1; ++columnIndex) {
 		setCursorPosition(columnIndex, 0);
-		cout << "#";
+		if (columnIndex == 0) cout << "\u2554";
+		else {
+			cout << "\u2550";
+		}
 		cout << "";
 		cout.flush();		
 	}
-	cout << endl;
+	cout << "\u2557" << endl;
+	
 	
 	for (int columnIndex = 1; columnIndex < height; ++columnIndex) {
 		for (int rowIndex = 0; rowIndex < width; ++rowIndex) {
 			if (rowIndex == 0) {
 				setCursorPosition(rowIndex, columnIndex);
-				cout << "#";
+				cout << "\u2551";
 				cout << "";
 				cout.flush();
 			}
 			
-			if (columnIndex == y && rowIndex == x) {
+			if (columnIndex == headY && rowIndex == headX) {
 				setCursorPosition(rowIndex, columnIndex);
-				cout << "@";
+				cout << "\u263A";
 				cout << "";
 				cout.flush();
 				
 			} else if (columnIndex == foodY && rowIndex == foodX) {
 				colorize(96);
 				setCursorPosition(rowIndex, columnIndex);
-				cout << "$";
+				cout << "\u2665";
 				cout << "";
 				cout.flush();
 				colorize(2);
@@ -198,7 +204,7 @@ void draw(string username, int bestScore) {
 				for (int tailIndex = 0; tailIndex < tailSize; ++tailIndex) {
 					if (tailX[tailIndex] == rowIndex && tailY[tailIndex] == columnIndex) {
 						setCursorPosition(rowIndex, columnIndex);
-						cout << "*";
+						cout << "\u2588";
 						cout << "";
 						cout.flush();						
 						print = true;
@@ -209,20 +215,22 @@ void draw(string username, int bestScore) {
 		    }
 			if (rowIndex == width - 1) {
 				setCursorPosition(rowIndex, columnIndex);
-				cout << "#";
+				cout << "\u2551";
 				cout << "";
 				cout.flush();
 			}
 		}
 	    cout << endl;
 	}
+	cout << "\u255A";
 	
-	for (int columnIndex = 0; columnIndex < width; ++columnIndex) {
+	for (int columnIndex = 1; columnIndex < width - 1; ++columnIndex) {
 		setCursorPosition(columnIndex, height);
-		cout << "#";
+		cout << "\u2550";
 		cout << "";
 		cout.flush();
 	}
+	cout << "\u255D";
 	cout << "\n\n";
 	cout << "+";
 	for (int columnIndex = 0; columnIndex < 24; ++columnIndex) {
@@ -291,8 +299,8 @@ void logic() {
 	int prevY = tailY[0];
 	int prevNewX;
 	int prevNewY;
-	tailX[0] = x;
-	tailY[0] = y;
+	tailX[0] = headX;
+	tailY[0] = headY;
 	
 	for (int tailIndex = 1; tailIndex < tailSize; ++tailIndex) {
 		prevNewX = tailX[tailIndex];
@@ -304,30 +312,30 @@ void logic() {
 	}
 	switch(dir) {
 		case LEFT:
-			--x;
+			--headX;
 			break;
 		case RIGHT:
-			++x;
+			++headX;
 		    break;
 		case UP:
-			--y;
+			--headY;
 		    break;
 		case DOWN:
-			++y;
+			++headY;
 		    break;
 		default:
 		    break;	
 	}
 	
-	if (x >= width || x <= 0 || y >= height || y <= 0 ) {
+	if (headX > width - 2 || headX <= 0 || headY > height - 1 || headY <= 0 ) {
 		gameOver = true;
 	}
 	for (int tailIndex = 0; tailIndex < tailSize; ++tailIndex) {
-		if (tailX[tailIndex] == x && tailY[tailIndex] == y) {
+		if (tailX[tailIndex] == headX && tailY[tailIndex] == headY) {
 			gameOver = true;
 		}
 	}
-	if (x == foodX && y == foodY) {
+	if (headX == foodX && headY == foodY) {
 		score += 1;
 		if (score > bestScore) {
 		    bestScore = score;
@@ -377,6 +385,9 @@ void writeInLeaderboard() {
 }
 
 int main() {
+	system("chcp 65001");
+	system("cls");
+	
 	loading();
 	
 	start:
