@@ -120,7 +120,7 @@ bool isUsernameInList;
 const int width = 20;
 const int height = 20;
 
-int headX, headY, foodX, foodY, score;
+int headX, headY, foodX, foodY, score, tmpHeadX, tmpHeadY;
 int tailX[100], tailY[100];
 int tailSize = 0;
 int timeSleep = 150;
@@ -162,8 +162,6 @@ void setup() {
 void draw(string username, int bestScore) {
 	
 	hideCursor();
-	
-	
 	
 	for (int columnIndex = 0; columnIndex < width - 1; ++columnIndex) {
 		setCursorPosition(columnIndex, 0);
@@ -279,19 +277,56 @@ void draw(string username, int bestScore) {
 }
 
 void input() {
-        if(GetAsyncKeyState(VK_UP) && dir != DOWN) {
-            dir = UP;
-        }
-        if(GetAsyncKeyState(VK_DOWN) && dir != UP) {
-            dir = DOWN;
-        }
-        if(GetAsyncKeyState(VK_LEFT) && dir != RIGHT) {
-            dir = LEFT;
-        }
-        if(GetAsyncKeyState(VK_RIGHT) && dir != LEFT) {
-            dir = RIGHT;
-        }
-    }
+	if (_kbhit()) {
+		switch(_getch()) {
+			case 'a':
+				dir = LEFT;
+				break;
+			case 's':
+			    dir = DOWN;
+				break;
+			case 'd':
+				dir = RIGHT;
+				break;
+			case 'w':
+				dir = UP;
+				break;				
+		}
+	}
+}
+
+void checkTail() {
+	for (int tailIndex = 0; tailIndex < tailSize; ++tailIndex) {
+			
+			if (dir == LEFT && headX - 1 == tailX[tailIndex] && headY == tailY[tailIndex]) {
+					if(headY + 1 != height) dir = DOWN;
+					else {
+						if (headY + 1 == height && headX - 1 != 0) dir = LEFT;
+						else
+						dir = UP;
+					}
+			}
+			if (dir == RIGHT && headX + 1 == tailX[tailIndex] && headY == tailY[tailIndex]) {
+					if(headY + 1 != height) dir = DOWN;
+					else {
+						dir = UP;
+					}
+			}
+			if (dir == UP && headY - 1 == tailY[tailIndex] && headX == tailX[tailIndex]) {
+					if(headX + 1 != width) dir = RIGHT;
+					else {
+						dir = LEFT;
+					}
+			}
+			if (dir == DOWN && headX + 1 == tailY[tailIndex] && headX == tailX[tailIndex]) {
+				tmpHeadX = headX;
+					if(headX + 1 != width) dir = RIGHT;
+					else {
+						dir = LEFT;
+					}
+			}
+		}
+}
 
 void logic() {
 	
@@ -348,7 +383,27 @@ void logic() {
         foodY = rand() % height;
         ++tailSize;
 	}
+	
+	if(headX > 0 && headX < width - 1 && headY > 0 && headY < height - 1) {
+		if(headX > foodX) {
+		dir = LEFT;
+		checkTail();
+		}
+		if(headX < foodX) {
+		dir = RIGHT;
+		checkTail();
+		}
+		if(headY < foodY) {
+		dir = DOWN;
+		checkTail();
+		}
+		if(headY > foodY) {
+		dir = UP;
+		checkTail();
+		}
+	}
 }
+
 void sorting(int rowCount) {
 	for (int leaderboardIndex = 0; leaderboardIndex < rowCount; ++leaderboardIndex) {
 	int tmp = 0;
