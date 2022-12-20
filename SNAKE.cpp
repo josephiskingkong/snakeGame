@@ -120,11 +120,11 @@ bool isUsernameInList;
 const int width = 20;
 const int height = 20;
 
-int x, y, foodX, foodY, score;
+int headX, headY, foodX, foodY, score, tmpHeadX, tmpHeadY;
 int tailX[100], tailY[100];
 int tailSize = 0;
 int timeSleep = 150;
-int sleepDeduction = 10;
+int sleepDeduction = 5;
 int bestScore = 0;	
 int rowCount = 0;
 
@@ -134,42 +134,77 @@ string username;
 enum direction { STOP = 0, LEFT, RIGHT, DOWN, UP };
 direction dir;
 
+void setCursorPosition(int headX, int headY) {
+    static const HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    cout.flush();
+    COORD coord = { (SHORT)headX, (SHORT)headY };
+    SetConsoleCursorPosition(hOut, coord);
+}
+
+void hideCursor () {
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO info;
+	info.dwSize = 100;
+	info.bVisible - FALSE;
+	SetConsoleCursorInfo(consoleHandle, &info);
+}
+
 void setup() {
     gameOver = false;
     dir = STOP;
-    x = rand() % width;
-    y = rand() % height;
+    headX = rand() % (width - 1) + 1;
+    headY = rand() % (height - 1) + 1;
     score = 0;
-    foodX = rand() % width;
-    foodY = rand() % height;
+    foodX = rand() % (width - 1) + 1;
+    foodY = rand() % (height - 1) + 1;
 }
 
 void draw(string username, int bestScore) {
 	
-	system("cls");
+	hideCursor();
 	
-	for (int columnIndex = 0; columnIndex < width + 2; ++columnIndex) {
-		cout << "#";
+	for (int columnIndex = 0; columnIndex < width - 1; ++columnIndex) {
+		setCursorPosition(columnIndex, 0);
+		if (columnIndex == 0) cout << "\u2554";
+		else {
+			cout << "\u2550";
+		}
+		cout << "";
+		cout.flush();		
 	}
-	cout << endl;
+	cout << "\u2557" << endl;
 	
-	for (int columnIndex = 0; columnIndex < height; ++columnIndex) {
+	
+	for (int columnIndex = 1; columnIndex < height; ++columnIndex) {
 		for (int rowIndex = 0; rowIndex < width; ++rowIndex) {
 			if (rowIndex == 0) {
-				cout << "#";
+				setCursorPosition(rowIndex, columnIndex);
+				cout << "\u2551";
+				cout << "";
+				cout.flush();
 			}
 			
-			if (columnIndex == y && rowIndex == x) {
-				cout << "@";
+			if (columnIndex == headY && rowIndex == headX) {
+				setCursorPosition(rowIndex, columnIndex);
+				cout << "\u263A";
+				cout << "";
+				cout.flush();
+				
 			} else if (columnIndex == foodY && rowIndex == foodX) {
 				colorize(96);
-				cout << "$";
+				setCursorPosition(rowIndex, columnIndex);
+				cout << "\u2665";
+				cout << "";
+				cout.flush();
 				colorize(2);
 			} else {
 				bool print = false;
 				for (int tailIndex = 0; tailIndex < tailSize; ++tailIndex) {
 					if (tailX[tailIndex] == rowIndex && tailY[tailIndex] == columnIndex) {
-						cout << "*";
+						setCursorPosition(rowIndex, columnIndex);
+						cout << "\u2588";
+						cout << "";
+						cout.flush();						
 						print = true;
 					}
 				}
@@ -177,16 +212,24 @@ void draw(string username, int bestScore) {
 			    cout << " ";			
 		    }
 			if (rowIndex == width - 1) {
-				cout << "#";
+				setCursorPosition(rowIndex, columnIndex);
+				cout << "\u2551";
+				cout << "";
+				cout.flush();
 			}
 		}
 	    cout << endl;
 	}
+	cout << "\u255A";
 	
-	for (int columnIndex = 0; columnIndex < width + 2; ++columnIndex) {
-		cout << "#";
+	for (int columnIndex = 1; columnIndex < width - 1; ++columnIndex) {
+		setCursorPosition(columnIndex, height);
+		cout << "\u2550";
+		cout << "";
+		cout.flush();
 	}
-	cout << endl << endl;
+	cout << "\u255D";
+	cout << "\n\n";
 	cout << "+";
 	for (int columnIndex = 0; columnIndex < 24; ++columnIndex) {
 		cout << "-";
@@ -231,23 +274,59 @@ void draw(string username, int bestScore) {
 		cout << "-";
 	}
 	cout << "+";
-	
 }
 
 void input() {
-        if(GetAsyncKeyState(VK_UP) && dir != DOWN) {
-            dir = UP;
-        }
-        if(GetAsyncKeyState(VK_DOWN) && dir != UP) {
-            dir = DOWN;
-        }
-        if(GetAsyncKeyState(VK_LEFT) && dir != RIGHT) {
-            dir = LEFT;
-        }
-        if(GetAsyncKeyState(VK_RIGHT) && dir != LEFT) {
-            dir = RIGHT;
-        }
-    }
+	if (_kbhit()) {
+		switch(_getch()) {
+			case 'a':
+				dir = LEFT;
+				break;
+			case 's':
+			    dir = DOWN;
+				break;
+			case 'd':
+				dir = RIGHT;
+				break;
+			case 'w':
+				dir = UP;
+				break;				
+		}
+	}
+}
+
+void checkTail() {
+	for (int tailIndex = 0; tailIndex < tailSize; ++tailIndex) {
+			
+			if (dir == LEFT && headX - 1 == tailX[tailIndex] && headY == tailY[tailIndex]) {
+					if(headY + 1 != height) dir = DOWN;
+					else {
+						if (headY + 1 == height && headX - 1 != 0) dir = LEFT;
+						else
+						dir = UP;
+					}
+			}
+			if (dir == RIGHT && headX + 1 == tailX[tailIndex] && headY == tailY[tailIndex]) {
+					if(headY + 1 != height) dir = DOWN;
+					else {
+						dir = UP;
+					}
+			}
+			if (dir == UP && headY - 1 == tailY[tailIndex] && headX == tailX[tailIndex]) {
+					if(headX + 1 != width) dir = RIGHT;
+					else {
+						dir = LEFT;
+					}
+			}
+			if (dir == DOWN && headX + 1 == tailY[tailIndex] && headX == tailX[tailIndex]) {
+				tmpHeadX = headX;
+					if(headX + 1 != width) dir = RIGHT;
+					else {
+						dir = LEFT;
+					}
+			}
+		}
+}
 
 void logic() {
 	
@@ -255,8 +334,8 @@ void logic() {
 	int prevY = tailY[0];
 	int prevNewX;
 	int prevNewY;
-	tailX[0] = x;
-	tailY[0] = y;
+	tailX[0] = headX;
+	tailY[0] = headY;
 	
 	for (int tailIndex = 1; tailIndex < tailSize; ++tailIndex) {
 		prevNewX = tailX[tailIndex];
@@ -268,43 +347,63 @@ void logic() {
 	}
 	switch(dir) {
 		case LEFT:
-			--x;
+			--headX;
 			break;
 		case RIGHT:
-			++x;
+			++headX;
 		    break;
 		case UP:
-			--y;
+			--headY;
 		    break;
 		case DOWN:
-			++y;
+			++headY;
 		    break;
 		default:
 		    break;	
 	}
 	
-	if (x > width || x < 0 || y >= height || y < 0 ) {
+	if (headX > width - 2 || headX <= 0 || headY > height - 1 || headY <= 0 ) {
 		gameOver = true;
 	}
 	for (int tailIndex = 0; tailIndex < tailSize; ++tailIndex) {
-		if (tailX[tailIndex] == x && tailY[tailIndex] == y) {
+		if (tailX[tailIndex] == headX && tailY[tailIndex] == headY) {
 			gameOver = true;
 		}
 	}
-	if (x == foodX && y == foodY) {
+	if (headX == foodX && headY == foodY) {
 		score += 1;
 		if (score > bestScore) {
 		    bestScore = score;
 	    }
 		timeSleep = timeSleep - sleepDeduction;
-		if (timeSleep == 50) {
+		if (timeSleep <= 75) {
 			sleepDeduction = 0;
 		}
 		foodX = rand() % width;
         foodY = rand() % height;
         ++tailSize;
 	}
+	
+	if(headX > 0 && headX < width - 1 && headY > 0 && headY < height - 1) {
+		if(headX > foodX) {
+		dir = LEFT;
+		checkTail();
+		}
+		if(headX < foodX) {
+		dir = RIGHT;
+		checkTail();
+		}
+		if(headY < foodY) {
+		dir = DOWN;
+		checkTail();
+		}
+		if(headY > foodY) {
+		dir = UP;
+		checkTail();
+		}
+	}
 }
+
 void sorting(int rowCount) {
 	for (int leaderboardIndex = 0; leaderboardIndex < rowCount; ++leaderboardIndex) {
 	int tmp = 0;
@@ -341,6 +440,9 @@ void writeInLeaderboard() {
 }
 
 int main() {
+	system("chcp 65001");
+	system("cls");
+	
 	loading();
 	
 	start:
@@ -382,6 +484,8 @@ int main() {
 		goto start;
 	}
 	colorize(2);
+	
+	system("cls");
 
 	setup();
 	while(!gameOver) {
